@@ -11,6 +11,7 @@ from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.helpers.event import async_track_time_change
 from homeassistant.components.http import HomeAssistantView
 from homeassistant.helpers import config_validation as cv
+from homeassistant.components.http import StaticPathConfig
 from aiohttp import web
 
 from .database import (init_db, get_db_path, get_last_price_update,
@@ -49,11 +50,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     static_path = os.path.join(os.path.dirname(__file__), "www")
 
     # Register static files under /filament_stock_panel
-    await hass.http.async_register_static_paths(
-        url_path="/filament_stock_panel",
-        file_path=static_path,
-        cache_headers=False,
-    )
+
+    await hass.http.async_register_static_paths([
+        StaticPathConfig(
+            url_path="/filament_stock_panel",
+            path=static_path,
+            cache_headers=False,
+        )
+    ])
 
     # Register panel
     try:
