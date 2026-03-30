@@ -1,7 +1,28 @@
 {
-  "name": "Aiden's 3D Printing Integration",
+  "name": "Filament Stock Manager",
   "content_in_root": false,
   "zip_release": false,
   "render_readme": true,
-  "homeassistant": "2023.6.0"
+  "homeassistant": "2023.6.0",
+  "content": [
+    {
+      "type": "integration",
+      "domain": "filament_stock",
+      "name": "Filament Stock Manager",
+      "version": "2.0.0",
+      "documentation": "https://github.com/Kousei-Uchu/Business-Tools-for-Home-Assistant",
+      "dependencies": [],
+      "codeowners": [],
+      "requirements": [
+        "curl_cffi>=0.6.0",
+        "lxml>=4.9.0",
+        "selenium>=4.0.0",
+        "webdriver-manager>=4.0.0",
+        "squareup>=37.0.0",
+        "requests>=2.28.0"
+      ],
+      "config_flow": true,
+      "iot_class": "cloud_polling"
+    }
+  ]
 }
