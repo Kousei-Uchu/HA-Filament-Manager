@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Filament Stock</title>
+<style>
+:root{--bg:#0f1117;--s1:#1a1d27;--s2:#222536;--s3:#2a2e42;--bd:rgba(255,255,255,.08);--ac:#6c8fff;--acd:rgba(108,143,255,.15);--gr:#4caf7d;--grd:rgba(76,175,125,.15);--or:#f59e0b;--ord:rgba(245,158,11,.15);--re:#ef4444;--red:rgba(239,68,68,.15);--tx:#e8eaf0;--t2:#9ba3bf;--t3:#5c6480;--r:14px;--rs:8px;--sh:0 4px 24px rgba(0,0,0,.4);--tr:.18s cubic-bezier(.4,0,.2,1)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--tx);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:14px;min-height:100vh}
+#app{display:flex;flex-direction:column;height:100vh}
+.topbar{display:flex;align-items:center;gap:10px;padding:12px 18px;background:var(--s1);border-bottom:1px solid var(--bd);flex-shrink:0}
+.topbar h1{font-size:17px;font-weight:700;flex:1}
+.stats{display:flex;gap:12px;align-items:center}
+.sp{display:flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;background:var(--s2);font-size:11px;font-weight:600}
+.dot{width:7px;height:7px;border-radius:50%}
+.da{background:var(--ac);box-shadow:0 0 5px var(--ac)}
+.dg{background:var(--gr)}
+.do{background:var(--or)}
+.dr{background:var(--re);box-shadow:0 0 5px var(--re)}
+.tabs{display:flex;gap:2px;padding:8px 18px 0;background:var(--s1);border-bottom:1px solid var(--bd);flex-shrink:0;overflow-x:auto}
+.tab{padding:7px 15px;border-radius:var(--rs) var(--rs) 0 0;border:none;background:transparent;color:var(--t2);cursor:pointer;font-size:12px;font-weight:600;border-bottom:2px solid transparent;white-space:nowrap;transition:color var(--tr),border-color var(--tr)}
+.tab.on{color:var(--ac);border-bottom-color:var(--ac)}
+.tab:hover:not(.on){color:var(--tx)}
+.content{flex:1;overflow-y:auto;padding:18px}
+/* Grid */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:13px}
+/* Cards */
+.card{background:var(--s1);border:1px solid var(--bd);border-radius:var(--r);padding:14px;transition:border-color var(--tr),transform var(--tr);cursor:pointer;position:relative}
+.card:hover{border-color:var(--ac);transform:translateY(-2px)}
+.fc{display:flex;flex-direction:column;align-items:center;gap:8px}
+.fc img,.fc .nimg{width:85px;height:85px;object-fit:cover;border-radius:var(--rs)}
+.fc .nimg{background:var(--s3);display:flex;align-items:center;justify-content:center;color:var(--t3);font-size:10px}
+.fc .nm{font-weight:700;text-align:center;font-size:12px;line-height:1.3}
+.fc .sb{color:var(--t2);font-size:11px;text-align:center}
+.fc .bgs{display:flex;gap:3px;justify-content:center;flex-wrap:wrap}
+.badge{padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700}
+.bg-a{background:var(--acd);color:var(--ac)}
+.bg-g{background:var(--grd);color:var(--gr)}
+.bg-o{background:var(--ord);color:var(--or)}
+.bg-r{background:var(--red);color:var(--re)}
+.bg-sale{background:var(--grd);color:var(--gr);animation:ps 2s ease-in-out infinite}
+@keyframes ps{0%,100%{opacity:1}50%{opacity:.5}}
+/* Overlay */
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:100;padding:18px}
+.pnl{background:var(--s1);border:1px solid var(--bd);border-radius:var(--r);width:100%;max-width:510px;max-height:90vh;overflow-y:auto;box-shadow:var(--sh);position:relative}
+.pnl-hd{display:flex;align-items:flex-start;gap:14px;padding:18px;border-bottom:1px solid var(--bd)}
+.pnl-hd img,.pnl-hd .nimg{width:95px;height:95px;object-fit:cover;border-radius:var(--rs)}
+.pnl-hd .nimg{background:var(--s3);display:flex;align-items:center;justify-content:center;color:var(--t3);font-size:11px}
+.pnl-hd .inf{flex:1}
+.pnl-hd h2{font-size:19px;font-weight:800}
+.pnl-hd .mat{color:var(--t2);font-size:14px;margin:2px 0}
+.pnl-hd .brnd{color:var(--t3);font-size:11px}
+.pnl-hd .pr{display:flex;align-items:center;gap:7px;margin-top:7px}
+.pnl-hd .pv{font-size:17px;font-weight:700;color:var(--ac)}
+.xbtn{position:absolute;top:12px;right:12px;background:var(--s2);border:none;color:var(--t2);width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center}
+.xbtn:hover{background:var(--s3);color:var(--tx)}
+.pnl-bd{padding:18px;display:flex;flex-direction:column;gap:14px}
+.sc{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sb2{background:var(--s2);border-radius:var(--rs);padding:14px;text-align:center}
+.sb2 .lbl{font-size:10px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:.5px}
+.sb2 .cnt{font-size:34px;font-weight:800;line-height:1.1}
+.ag{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.ag.f{grid-template-columns:1fr}
+/* Buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:9px 14px;border-radius:var(--rs);border:none;cursor:pointer;font-size:12px;font-weight:700;transition:filter var(--tr),transform var(--tr);text-decoration:none}
+.btn:hover{filter:brightness(1.15);transform:translateY(-1px)}
+.btn:active{transform:translateY(0)}
+.btn-a{background:var(--ac);color:#fff}
+.btn-g{background:var(--gr);color:#fff}
+.btn-o{background:var(--or);color:#fff}
+.btn-r{background:var(--re);color:#fff}
+.btn-gh{background:var(--s2);color:var(--tx);border:1px solid var(--bd)}
+.btn-gh:hover{border-color:var(--ac);color:var(--ac)}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+/* Search */
+.sb3{display:flex;gap:9px;margin-bottom:14px;align-items:center}
+.si{flex:1;background:var(--s2);border:1px solid var(--bd);color:var(--tx);border-radius:var(--rs);padding:9px 12px;font-size:13px;transition:border-color var(--tr);outline:none}
+.si:focus{border-color:var(--ac)}
+.si::placeholder{color:var(--t3)}
+/* Cart */
+.cs{margin-bottom:20px}
+.cs h3{font-size:12px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.ci{display:flex;align-items:center;gap:12px;background:var(--s1);border:1px solid var(--bd);border-radius:var(--rs);padding:10px 14px;margin-bottom:7px}
+.ci img,.ci .nimg{width:50px;height:50px;object-fit:cover;border-radius:5px}
+.ci .nimg{background:var(--s3);display:flex;align-items:center;justify-content:center;color:var(--t3);font-size:9px}
+.ci .mt{flex:1}
+.ci .mt .nm{font-weight:700;font-size:13px}
+.ci .mt .sb{color:var(--t2);font-size:11px}
+.ci .qb{font-size:20px;font-weight:800;color:var(--ac);min-width:28px;text-align:center}
+.ci .acts{display:flex;gap:5px}
+/* Qty modal */
+.qm{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:200}
+.qmi{background:var(--s1);border:1px solid var(--bd);border-radius:var(--r);padding:26px;min-width:270px;text-align:center;box-shadow:var(--sh)}
+.qmi h3{font-size:15px;margin-bottom:5px}
+.qmi p{color:var(--t2);font-size:12px;margin-bottom:18px}
+.qrow{display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:22px}
+.qv{font-size:40px;font-weight:800;min-width:56px}
+.qbtn{width:42px;height:42px;border-radius:50%;border:none;cursor:pointer;font-size:20px;font-weight:700;display:flex;align-items:center;justify-content:center;transition:filter var(--tr)}
+.qbtn:hover{filter:brightness(1.2)}
+.qp{background:var(--gr);color:#fff}
+.qn{background:var(--s3);color:var(--tx)}
+/* Form */
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.fg.f{grid-template-columns:1fr}
+.fgr{display:flex;flex-direction:column;gap:5px}
+.fgr label{font-size:10px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.4px}
+.fi{background:var(--s2);border:1px solid var(--bd);color:var(--tx);border-radius:var(--rs);padding:9px 11px;font-size:13px;outline:none;transition:border-color var(--tr);width:100%}
+.fi:focus{border-color:var(--ac)}
+.fi::placeholder{color:var(--t3)}
+.fe{color:var(--re);font-size:11px}
+/* Warn */
+.wb{background:var(--ord);border:1px solid var(--or);border-radius:var(--rs);padding:9px 12px;color:var(--or);font-size:11px}
+/* Toast */
+#toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--s2);border:1px solid var(--bd);color:var(--tx);padding:11px 22px;border-radius:22px;font-weight:600;font-size:13px;z-index:999;opacity:0;transition:opacity .3s,transform .3s;pointer-events:none;box-shadow:var(--sh)}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#toast.err{border-color:var(--re);color:var(--re)}
+#toast.ok{border-color:var(--gr);color:var(--gr)}
+/* Empty */
+.empty{display:flex;flex-direction:column;align-items:center;gap:10px;padding:50px 20px;color:var(--t3)}
+/* Spinner */
+.spin{width:30px;height:30px;border:3px solid var(--bd);border-top-color:var(--ac);border-radius:50%;animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.lc{display:flex;align-items:center;justify-content:center;padding:50px}
+/* Divider */
+.dvd{height:1px;background:var(--bd);margin:6px 0}
+/* Table */
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;color:var(--t2);font-weight:700;padding:7px 10px;border-bottom:1px solid var(--bd);font-size:11px;text-transform:uppercase;letter-spacing:.4px}
+td{padding:8px 10px;border-bottom:1px solid var(--bd);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--s2)}
+/* Report */
+.rstats{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:16px}
+.rstat{background:var(--s2);border-radius:var(--rs);padding:14px;text-align:center}
+.rstat .rv{font-size:22px;font-weight:800;color:var(--ac)}
+.rstat .rl{font-size:10px;color:var(--t2);text-transform:uppercase;letter-spacing:.4px;margin-top:3px}
+/* Inventory row */
+.irow{display:flex;align-items:center;gap:10px;padding:10px;background:var(--s1);border:1px solid var(--bd);border-radius:var(--rs);margin-bottom:6px;cursor:pointer}
+.irow:hover{border-color:var(--ac)}
+.irow img,.irow .nimg{width:44px;height:44px;object-fit:cover;border-radius:5px;flex-shrink:0}
+.irow .nimg{background:var(--s3);display:flex;align-items:center;justify-content:center;color:var(--t3);font-size:9px}
+.irow .im{flex:1}
+.irow .im .in{font-weight:700;font-size:13px}
+.irow .im .is{color:var(--t2);font-size:11px}
+.irow .qtys{display:flex;gap:8px;align-items:center}
+.qty-chip{padding:3px 8px;border-radius:8px;font-size:11px;font-weight:600}
+/* Print history row */
+.phr{display:flex;align-items:center;gap:10px;padding:10px;background:var(--s1);border:1px solid var(--bd);border-radius:var(--rs);margin-bottom:6px}
+.phr .pm{flex:1;font-size:12px}
+/* section header */
+.sh{font-size:12px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.5px;margin:14px 0 8px}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="topbar">
+    <h1>🧵 Filament Stock</h1>
+    <div class="stats">
+      <div class="sp"><span class="dot da"></span><span id="st-sp">–</span> spools</div>
+      <div class="sp"><span class="dot do"></span><span id="st-low">–</span> low</div>
+      <div class="sp"><span class="dot dg"></span><span id="st-sale">–</span> on sale</div>
+      <div class="sp"><span class="dot da"></span>Cart: <span id="st-cart">–</span></div>
+      <div class="sp"><span class="dot dr"></span>Issues: <span id="st-disc">–</span></div>
+    </div>
+    <button class="btn btn-gh" onclick="App.refresh()" title="Refresh">↻</button>
+  </div>
+  <div class="tabs">
+    <button class="tab on" data-tab="filaments" onclick="App.tab('filaments')">Filaments</button>
+    <button class="tab" data-tab="cart" onclick="App.tab('cart')">Cart</button>
+    <button class="tab" data-tab="inventory" onclick="App.tab('inventory')">Stocktaking</button>
+    <button class="tab" data-tab="discrepancies" onclick="App.tab('discrepancies')">Discrepancies</button>
+    <button class="tab" data-tab="reports" onclick="App.tab('reports')">Reports</button>
+    <button class="tab" data-tab="print" onclick="App.tab('print')">Print / Add Stock</button>
+    <button class="tab" data-tab="history" onclick="App.tab('history')">History</button>
+  </div>
+  <div class="content">
+    <!-- FILAMENTS -->
+    <div id="tab-filaments">
+      <div class="sb3">
+        <input class="si" id="fsearch" placeholder="Search colour, material, brand…" oninput="App.filterF()">
+        <button class="btn btn-a" onclick="App.openCreate()">＋ New</button>
+        <button class="btn btn-gh" onclick="App.doRefreshPrices()">⚡ Prices</button>
+      </div>
+      <div class="grid" id="fgrid"><div class="lc"><div class="spin"></div></div></div>
+    </div>
+    <!-- CART -->
+    <div id="tab-cart" style="display:none">
+      <div id="cart-content"><div class="lc"><div class="spin"></div></div></div>
+    </div>
+    <!-- INVENTORY / STOCKTAKING -->
+    <div id="tab-inventory" style="display:none">
+      <div class="sb3">
+        <input class="si" id="isearch" placeholder="Search products…" oninput="App.filterI()">
+        <button class="btn btn-a" onclick="App.syncInventory()">🔄 Sync All</button>
+        <button class="btn btn-o" onclick="App.pushSquare()">⬆ Push to Square</button>
+        <button class="btn btn-r" onclick="App.resetCounts()">⚠ Reset Counts</button>
+      </div>
+      <div id="inv-content"><div class="lc"><div class="spin"></div></div></div>
+    </div>
+    <!-- DISCREPANCIES -->
+    <div id="tab-discrepancies" style="display:none">
+      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+        <button class="btn btn-gh" id="disc-btn-count" onclick="App.showDisc('count')">Count</button>
+        <button class="btn btn-gh" id="disc-btn-price" onclick="App.showDisc('price')">Price</button>
+        <button class="btn btn-gh" id="disc-btn-miss_shopify" onclick="App.showDisc('miss_shopify')">Missing Shopify</button>
+        <button class="btn btn-gh" id="disc-btn-miss_square" onclick="App.showDisc('miss_square')">Missing Square</button>
+        <button class="btn btn-a" onclick="App.loadDiscrepancies()">↻ Refresh</button>
+        <button class="btn btn-r" onclick="App.cleanupInventory()">🧹 Cleanup</button>
+      </div>
+      <div id="disc-content"><div class="lc"><div class="spin"></div></div></div>
+    </div>
+    <!-- REPORTS -->
+    <div id="tab-reports" style="display:none">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:16px">
+        <div class="fgr"><label>Start Date</label><input type="date" class="fi" id="rep-start" style="width:auto"></div>
+        <div class="fgr"><label>End Date</label><input type="date" class="fi" id="rep-end" style="width:auto"></div>
+        <button class="btn btn-a" onclick="App.fetchReport()">Fetch Report</button>
+      </div>
+      <div id="rep-content"></div>
+    </div>
+    <!-- PRINT / ADD STOCK -->
+    <div id="tab-print" style="display:none">
+      <div style="background:var(--s1);border:1px solid var(--bd);border-radius:var(--r);padding:18px;max-width:560px">
+        <div class="sh" style="margin-top:0">Add Stock &amp; Print Labels</div>
+        <div class="fg" style="margin-bottom:11px">
+          <div class="fgr"><label>Item Name</label><input class="fi" id="as-name" placeholder="Dragon XL Blue"></div>
+          <div class="fgr"><label>Variant / Colour</label><input class="fi" id="as-variant" placeholder="Blue"></div>
+          <div class="fgr"><label>SKU / Barcode URL</label><input class="fi" id="as-sku" placeholder="https://aidens3dp.com/12345"></div>
+          <div class="fgr"><label>Price ($)</label><input class="fi" type="number" step="0.01" id="as-price" placeholder="9.99"></div>
+          <div class="fgr"><label>Quantity</label><input class="fi" type="number" id="as-qty" value="1"></div>
+          <div class="fgr"><label>Shopify Variant GID</label><input class="fi" id="as-gid" placeholder="gid://shopify/ProductVariant/…"></div>
+        </div>
+        <div class="fg" style="margin-bottom:14px">
+          <div class="fgr"><label>Label Type</label>
+            <select class="fi" id="as-sticker">
+              <option value="1">Tag</option><option value="2">Sticker (4-up)</option>
+              <option value="3">Egg</option><option value="4">Sticker No Price (4-up)</option>
+            </select>
+          </div>
+          <div class="fgr"><label>Deal Text</label>
+            <select class="fi" id="as-deal">
+              <option value="0">(none)</option>
+              <option value="1">I'm cheaper because I'm not quite right</option>
+              <option value="2">or 2 for $10.00</option><option value="3">or 3 for $10.00</option>
+              <option value="4">Add an egg for $17 more</option><option value="5">Add an egg for $19 more</option>
+              <option value="6">Add mini dragon for $5 more</option><option value="7">2 for $10 or 3 for $15</option>
+              <option value="8">End of Production</option><option value="9">I glow in the dark</option>
+              <option value="10">I change colour with heat</option><option value="11">or add 3x minis for $5.00 more</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn btn-a" onclick="App.addStock()">🖨 Print &amp; Add to Shopify</button>
+        <div id="as-result" style="margin-top:10px;font-size:12px;color:var(--t2)"></div>
+      </div>
+    </div>
+    <!-- HISTORY -->
+    <div id="tab-history" style="display:none">
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <button class="btn btn-gh" id="hist-btn-scans" onclick="App.showHist('scans')">Scan History</button>
+        <button class="btn btn-gh" id="hist-btn-prints" onclick="App.showHist('prints')">Print History</button>
+      </div>
+      <div id="hist-content"><div class="lc"><div class="spin"></div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Detail overlay -->
+<div class="ov" id="det-ov" style="display:none" onclick="App.closeDetail(event)">
+  <div class="pnl" id="det-pnl"><button class="xbtn" onclick="App.closeDetail()">✕</button><div id="det-body"></div></div>
+</div>
+
+<!-- Qty modal -->
+<div class="qm" id="qty-m" style="display:none">
+  <div class="qmi">
+    <h3 id="qm-title">How many?</h3><p id="qm-sub"></p>
+    <div class="qrow">
+      <button class="qbtn qn" onclick="App.qa(-1)">−</button>
+      <div class="qv" id="qv">1</div>
+      <button class="qbtn qp" onclick="App.qa(1)">＋</button>
+    </div>
+    <div style="display:flex;gap:9px;justify-content:center">
+      <button class="btn btn-gh" onclick="App.closeQ()">Cancel</button>
+      <button class="btn btn-a" onclick="App.confirmQ()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- Create/Modify form overlay -->
+<div class="ov" id="form-ov" style="display:none" onclick="App.closeForm(event)">
+  <div class="pnl" style="max-width:530px">
+    <button class="xbtn" onclick="App.closeForm()">✕</button>
+    <div style="padding:18px">
+      <h2 id="form-title" style="margin-bottom:18px">New Filament</h2>
+      <div class="fg" id="form-fields"></div>
+      <div style="display:flex;gap:9px;margin-top:18px">
+        <button class="btn btn-gh" onclick="App.closeForm()">Cancel</button>
+        <button class="btn btn-a" onclick="App.submitForm()">Save</button>
+      </div>
+      <div id="form-err" class="fe" style="margin-top:7px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Inventory variant detail overlay -->
+<div class="ov" id="inv-ov" style="display:none" onclick="App.closeInv(event)">
+  <div class="pnl" id="inv-pnl">
+    <button class="xbtn" onclick="App.closeInv()">✕</button>
+    <div id="inv-body" style="padding:18px"></div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const BASE='/api/filament_stock';
+function tok(){try{if(window.parent&&window.parent.__tokenCache)return window.parent.__tokenCache;const m=location.search.match(/[?&]auth=([^&]+)/);if(m)return decodeURIComponent(m[1]);const s=sessionStorage.getItem('hassToken');if(s)return s;}catch(e){}return null;}
+async function api(path,opts={}){const t=tok();const h={'Content-Type':'application/json'};if(t)h['Authorization']=`Bearer ${t}`;const r=await fetch(BASE+path,{...opts,headers:{...h,...(opts.headers||{})}});if(!r.ok){const e=await r.json().catch(()=>({error:r.statusText}));throw new Error(e.error||r.statusText);}return r.json();}
+function esc(s){if(s==null)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+
+const App=(()=>{
+let _f=[]; // filaments
+let _inv=[]; // inventory items
+let _disc={}; // discrepancies
+let _tab='filaments';
+let _histTab='scans';
+let _discTab='count';
+let _q={v:1,resolve:null};
+let _formMode=null,_formFil=null;
+let _selFil=null;
+let _selInv=null;
+
+let _tTimer=null;
+function toast(msg,type=''){
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.className='show'+(type?' '+type:'');
+  clearTimeout(_tTimer);_tTimer=setTimeout(()=>{el.className='';},3200);
+}
+
+// ── Stats bar ─────────────────────────────────────────────────────
+function updateStats(){
+  const total=_f.reduce((s,f)=>s+(f.counts?.full||0)+(f.counts?.partial||0),0);
+  const low=_f.filter(f=>(f.counts?.full||0)===0).length;
+  const sale=_f.filter(f=>f.status_info?.on_sale).length;
+  const cart=_f.reduce((s,f)=>s+(f.cart_status?.listed||0),0);
+  document.getElementById('st-sp').textContent=total;
+  document.getElementById('st-low').textContent=low;
+  document.getElementById('st-sale').textContent=sale;
+  document.getElementById('st-cart').textContent=cart;
+}
+
+function updateDiscStats(d){
+  const total=(d.count_discrepancies||[]).length+(d.price_discrepancies||[]).length+
+    (d.missing_shopify||[]).length+(d.missing_square||[]).length;
+  document.getElementById('st-disc').textContent=total;
+}
+
+// ── Data ──────────────────────────────────────────────────────────
+async function refresh(){
+  try{
+    const d=await api('/filaments/list');
+    _f=d.filaments||[];updateStats();renderCurrentTab();
+  }catch(e){toast('Load error: '+e.message,'err');}
+}
+
+async function doRefreshPrices(){
+  toast('Refreshing prices…');
+  try{
+    const t=tok();
+    await fetch('/api/services/filament_stock/refresh_prices',{method:'POST',
+      headers:{'Authorization':`Bearer ${t}`,'Content-Type':'application/json'},body:'{}'});
+    toast('Price refresh queued ✓','ok');setTimeout(refresh,5000);
+  }catch(e){toast(e.message,'err');}
+}
+
+// ── Tab routing ───────────────────────────────────────────────────
+function tab(name){
+  _tab=name;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.dataset.tab===name));
+  ['filaments','cart','inventory','discrepancies','reports','print','history'].forEach(t=>{
+    const el=document.getElementById('tab-'+t);
+    if(el)el.style.display=t===name?'':'none';
+  });
+  renderCurrentTab();
+}
+function renderCurrentTab(){
+  if(_tab==='filaments')renderFGrid('fgrid',_f);
+  else if(_tab==='cart')renderCart();
+  else if(_tab==='inventory')renderInventory();
+  else if(_tab==='discrepancies')loadDiscrepancies();
+  else if(_tab==='history')loadHistory(_histTab);
+}
+
+// ── Filament grid ─────────────────────────────────────────────────
+function filterF(){
+  const q=(document.getElementById('fsearch').value||'').toLowerCase().trim();
+  const terms=q.split(/\s+/).filter(Boolean);
+  const filtered=!terms.length?_f:_f.filter(f=>{
+    const h=[f.brand,f.colour,f.material].filter(Boolean).join(' ').toLowerCase();
+    return terms.every(t=>h.includes(t));
+  });
+  renderFGrid('fgrid',filtered);
+}
+function renderFGrid(id,filaments){
+  const g=document.getElementById(id);if(!g)return;
+  if(!filaments.length){g.innerHTML=`<div class="empty" style="grid-column:1/-1"><p>No filaments found</p></div>`;return;}
+  g.innerHTML=filaments.map(fCard).join('');
+}
+function stockBadges(f){
+  const full=f.counts?.full||0,par=f.counts?.partial||0;
+  const b=[];
+  if(full>0)b.push(`<span class="badge bg-a">${full} full</span>`);
+  if(par>0)b.push(`<span class="badge bg-g">${par} partial</span>`);
+  if(full===0&&par===0)b.push(`<span class="badge bg-r">Out of stock</span>`);
+  else if(full===0)b.push(`<span class="badge bg-o">No full</span>`);
+  if(f.status_info?.on_sale)b.push(`<span class="badge bg-sale">On Sale</span>`);
+  return b.join('');
+}
+function fCard(f){
+  const img=f.image_url?`<img src="${esc(f.image_url)}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`:'';
+  const fb=`<div class="nimg"${f.image_url?' style="display:none"':''}>No Img</div>`;
+  const pr=f.spool_cost!=null?`<div class="sb" style="color:var(--ac);font-weight:700">$${f.spool_cost.toFixed(2)}</div>`:'';
+  return `<div class="card fc" onclick="App.openDet('${esc(f.filament_id)}')">${img}${fb}
+    <div class="nm">${esc(f.colour||'Unknown')}</div>
+    <div class="sb">${esc(f.material||'')} · ${esc(f.brand||'')}</div>
+    ${pr}<div class="bgs">${stockBadges(f)}</div></div>`;
+}
+
+// ── Detail panel ──────────────────────────────────────────────────
+function openDet(fid){
+  _selFil=_f.find(f=>f.filament_id===fid);
+  if(!_selFil)return;
+  renderDet();
+  document.getElementById('det-ov').style.display='flex';
+}
+function renderDet(){
+  const f=_selFil;if(!f)return;
+  const img=f.image_url?`<img src="${esc(f.image_url)}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`:'';
+  const fb=`<div class="nimg"${f.image_url?' style="display:none"':''}>No Img</div>`;
+  const pi=f.status_info?.price_is_live?`<span style="color:var(--gr);font-size:11px">● Live</span>`:f.status_info?.is_default_price?`<span style="color:var(--t3);font-size:11px">Default</span>`:'';
+  const sale=f.status_info?.on_sale?`<span class="badge bg-sale">On Sale</span>`:'';
+  const warn=(f.status_info?.warnings||[]).length?`<div class="wb">⚠ ${esc(f.status_info.warnings.join(' · '))}</div>`:'';
+  const ol=f.url||`https://www.google.com/search?q=${encodeURIComponent([f.brand,f.material,f.colour].filter(Boolean).join(' '))}`;
+  document.getElementById('det-body').innerHTML=`
+  <div class="pnl-hd">${img}${fb}
+    <div class="inf">
+      <h2>${esc(f.colour||'Unknown')}</h2>
+      <div class="mat">${esc(f.material||'')} — ${esc(f.brand||'')}</div>
+      <div class="brnd">${esc(f.filament_id)}</div>
+      <div class="pr">${f.spool_cost!=null?`<span class="pv">$${f.spool_cost.toFixed(2)}</span>`:''} ${pi} ${sale}</div>
+    </div>
+  </div>
+  <div class="pnl-bd">
+    ${warn}
+    <div class="sc">
+      <div class="sb2"><div class="lbl">Full Spools</div><div class="cnt">${f.counts?.full??0}</div></div>
+      <div class="sb2"><div class="lbl">Partial Spools</div><div class="cnt">${f.counts?.partial??0}</div></div>
+    </div>
+    <div class="ag">
+      <button class="btn btn-o" onclick="App.doOpen('${esc(f.filament_id)}')" ${(f.counts?.full||0)===0?'disabled':''}>📦 Open Spool</button>
+      <button class="btn btn-gh" onclick="App.doFinish('${esc(f.filament_id)}')" ${(f.counts?.partial||0)===0?'disabled':''}>✅ Finish Partial</button>
+    </div>
+    <div class="ag">
+      <button class="btn btn-a" onclick="App.doReceive('${esc(f.filament_id)}')">📥 Receive Spools</button>
+      <button class="btn btn-g" onclick="App.doCartAdd('${esc(f.filament_id)}')">🛒 Add to Cart</button>
+    </div>
+    <div class="ag f"><a class="btn btn-gh" href="${esc(ol)}" target="_blank">🔗 Order More</a></div>
+    <div class="dvd"></div>
+    <div class="ag">
+      <button class="btn btn-gh" onclick="App.openModify('${esc(f.filament_id)}')">✏️ Modify</button>
+      <button class="btn btn-r" onclick="App.doDelete('${esc(f.filament_id)}')">🗑 Delete</button>
+    </div>
+  </div>`;
+}
+function closeDetail(ev){
+  if(ev&&ev.target!==document.getElementById('det-ov'))return;
+  document.getElementById('det-ov').style.display='none';_selFil=null;
+}
+
+// ── Spool actions ─────────────────────────────────────────────────
+async function doOpen(fid){try{await api(`/filaments/open/${fid}`,{method:'POST'});toast('Spool opened ✓','ok');await refresh();_selFil=_f.find(f=>f.filament_id===fid);renderDet();}catch(e){toast(e.message,'err');}}
+async function doFinish(fid){try{await api(`/filaments/finish/${fid}`,{method:'POST'});toast('Partial finished ✓','ok');await refresh();_selFil=_f.find(f=>f.filament_id===fid);renderDet();}catch(e){toast(e.message,'err');}}
+async function doReceive(fid){
+  const f=_f.find(x=>x.filament_id===fid);
+  const qty=await promptQ(`Receive spools of ${f?.colour||fid}`,'How many new full spools?');
+  if(qty==null)return;
+  try{await api('/filaments/new',{method:'POST',body:JSON.stringify({filament_id:fid,full_rolls:qty})});toast(`Received ${qty} spool(s) ✓`,'ok');await refresh();_selFil=_f.find(f=>f.filament_id===fid);renderDet();}catch(e){toast(e.message,'err');}
+}
+async function doCartAdd(fid){
+  const f=_f.find(x=>x.filament_id===fid);
+  const qty=await promptQ(`Add to cart: ${f?.colour||fid}`,'How many spools to order?');
+  if(qty==null)return;
+  try{await api('/filaments/cart/add',{method:'POST',body:JSON.stringify({filament_id:fid,qty})});toast('Added to cart ✓','ok');await refresh();}catch(e){toast(e.message,'err');}
+}
+async function doDelete(fid){
+  if(!confirm('Delete this filament permanently?'))return;
+  try{await api(`/filaments/delete/${fid}`,{method:'POST'});toast('Deleted ✓','ok');closeDetail();await refresh();}catch(e){toast(e.message,'err');}
+}
+
+// ── Qty modal ─────────────────────────────────────────────────────
+function promptQ(title,sub){
+  document.getElementById('qm-title').textContent=title;
+  document.getElementById('qm-sub').textContent=sub;
+  _q.v=1;document.getElementById('qv').textContent=1;
+  document.getElementById('qty-m').style.display='flex';
+  return new Promise(r=>{_q.resolve=r;});
+}
+function qa(d){_q.v=Math.max(1,_q.v+d);document.getElementById('qv').textContent=_q.v;}
+function confirmQ(){const v=_q.v;closeQ();if(_q.resolve){_q.resolve(v);_q.resolve=null;}}
+function closeQ(){document.getElementById('qty-m').style.display='none';if(_q.resolve){_q.resolve(null);_q.resolve=null;}}
+
+// ── Cart ──────────────────────────────────────────────────────────
+async function renderCart(){
+  const el=document.getElementById('cart-content');
+  el.innerHTML=`<div class="lc"><div class="spin"></div></div>`;
+  try{
+    const d=await api('/filaments/cart');
+    const cart=d.cart||[];
+    const listed=cart.filter(c=>(c.listed_qty||0)>0);
+    const ordered=cart.filter(c=>(c.ordered_qty||0)>0);
+    if(!listed.length&&!ordered.length){el.innerHTML=`<div class="empty"><p>Cart is empty</p></div>`;return;}
+    let h='';
+    if(listed.length){h+=`<div class="cs"><h3>To Order (${listed.length})</h3>${listed.map(c=>cartRow(c,'l')).join('')}</div>`;}
+    if(ordered.length){h+=`<div class="cs"><h3>Ordered — Pending Arrival (${ordered.length})</h3>${ordered.map(c=>cartRow(c,'o')).join('')}</div>`;}
+    el.innerHTML=h;
+  }catch(e){el.innerHTML=`<div class="empty"><p>Error: ${esc(e.message)}</p></div>`;}
+}
+function cartRow(c,mode){
+  const img=c.image_url?`<img src="${esc(c.image_url)}" alt="" onerror="this.style.display='none'">`:`<div class="nimg">No Img</div>`;
+  const nm=[c.colour,c.material,c.brand].filter(Boolean).join(' ');
+  const ol=c.url||`https://www.google.com/search?q=${encodeURIComponent(nm)}`;
+  const qty=mode==='l'?c.listed_qty:c.ordered_qty;
+  const acts=mode==='l'
+    ?`<a class="btn btn-g" href="${esc(ol)}" target="_blank" style="font-size:11px">Order</a>
+       <button class="btn btn-o" style="font-size:11px" onclick="App.cartOrdered('${esc(c.sku)}','${esc(nm)}')">Ordered ✓</button>`
+    :`<button class="btn btn-a" style="font-size:11px" onclick="App.cartArrived('${esc(c.sku)}','${esc(nm)}')">Arrived ✓</button>`;
+  return `<div class="ci">${img}<div class="mt"><div class="nm">${esc(nm)}</div><div class="sb">${esc(c.sku)}</div></div>
+    <div class="qb">${qty}</div><div class="acts">${acts}</div></div>`;
+}
+async function cartOrdered(sku,nm){
+  const qty=await promptQ(`Ordered: ${nm}`,'How many spools did you order?');
+  if(qty==null)return;
+  try{await api('/filaments/cart/ordered',{method:'POST',body:JSON.stringify({filament_id:sku,qty})});toast('Marked ordered ✓','ok');await refresh();renderCart();}catch(e){toast(e.message,'err');}
+}
+async function cartArrived(sku,nm){
+  const qty=await promptQ(`Arrived: ${nm}`,'How many spools arrived?');
+  if(qty==null)return;
+  try{await api('/filaments/cart/arrived',{method:'POST',body:JSON.stringify({filament_id:sku,qty})});toast('Stock updated ✓','ok');await refresh();renderCart();}catch(e){toast(e.message,'err');}
+}
+
+// ── Create/Modify form ────────────────────────────────────────────
+function openCreate(){_formMode='create';_formFil=null;document.getElementById('form-title').textContent='New Filament';document.getElementById('form-err').textContent='';renderForm(null);document.getElementById('form-ov').style.display='flex';}
+function openModify(fid){_formMode='modify';_formFil=_f.find(f=>f.filament_id===fid);document.getElementById('form-title').textContent='Modify Filament';document.getElementById('form-err').textContent='';renderForm(_formFil);document.getElementById('form-ov').style.display='flex';}
+function renderForm(f){
+  const v=(k,d='')=>f?(f[k]??d):d;
+  const isC=_formMode==='create';
+  document.getElementById('form-fields').innerHTML=`
+  <div class="fgr"><label>Brand</label><input class="fi" id="ff-brand" value="${esc(v('brand'))}" placeholder="Bambu Lab"></div>
+  <div class="fgr"><label>Material</label><input class="fi" id="ff-material" value="${esc(v('material'))}" placeholder="PLA"></div>
+  <div class="fgr"><label>Colour</label><input class="fi" id="ff-colour" value="${esc(v('colour'))}" placeholder="Jade White"></div>
+  <div class="fgr"><label>Cost ($)</label><input class="fi" type="number" step="0.01" id="ff-cost" value="${v('spool_cost','')}" placeholder="30.00"></div>
+  <div class="fgr"><label>Weight (g)</label><input class="fi" type="number" id="ff-wt" value="${v('spool_weight','')}" placeholder="1000"></div>
+  <div class="fgr"><label>Image URL</label><input class="fi" id="ff-img" value="${esc(v('image_url'))}" placeholder="https://…"></div>
+  <div class="fgr" style="grid-column:1/-1"><label>Store URL</label><input class="fi" id="ff-url" value="${esc(v('url'))}" placeholder="https://bambulab.com/…"></div>
+  ${isC?`<div class="fgr"><label>Initial Full Spools</label><input class="fi" type="number" id="ff-full" value="0"></div>
+  <div class="fgr"><label>Initial Partial Spools</label><input class="fi" type="number" id="ff-par" value="0"></div>`:''}`;}
+async function submitForm(){
+  const errEl=document.getElementById('form-err');errEl.textContent='';
+  const brand=document.getElementById('ff-brand').value.trim();
+  const material=document.getElementById('ff-material').value.trim();
+  const colour=document.getElementById('ff-colour').value.trim();
+  if(_formMode==='create'&&(!brand||!material||!colour)){errEl.textContent='Brand, material, colour required.';return;}
+  const p={};
+  if(brand)p.brand=brand;if(material)p.material=material;if(colour)p.colour=colour;
+  const cv=document.getElementById('ff-cost')?.value;if(cv)p.spool_cost=parseFloat(cv);
+  const wv=document.getElementById('ff-wt')?.value;if(wv)p.spool_weight=parseInt(wv);
+  const iv=document.getElementById('ff-img')?.value;if(iv)p.image_url=iv;
+  const uv=document.getElementById('ff-url')?.value;if(uv)p.url=uv;
+  try{
+    if(_formMode==='create'){
+      const fv=document.getElementById('ff-full')?.value;const pv=document.getElementById('ff-par')?.value;
+      p.full_rolls=parseInt(fv||0);p.partial_rolls=parseInt(pv||0);
+      await api('/filaments/new',{method:'POST',body:JSON.stringify(p)});toast('Created ✓','ok');
+    }else{
+      await api(`/filaments/modify/${_formFil.filament_id}`,{method:'POST',body:JSON.stringify(p)});toast('Updated ✓','ok');
+    }
+    closeForm();await refresh();
+  }catch(e){errEl.textContent=e.message;}
+}
+function closeForm(ev){if(ev&&ev.target!==document.getElementById('form-ov'))return;document.getElementById('form-ov').style.display='none';}
+
+// ── Inventory / Stocktaking ───────────────────────────────────────
+function filterI(){
+  const q=(document.getElementById('isearch').value||'').toLowerCase().trim();
+  const terms=q.split(/\s+/).filter(Boolean);
+  const filtered=!terms.length?_inv:_inv.filter(i=>{
+    const h=(i.name+' '+(i.variants||[]).map(v=>v.sku+' '+v.name).join(' ')).toLowerCase();
+    return terms.every(t=>h.includes(t));
+  });
+  renderInvList(filtered);
+}
+async function renderInventory(){
+  const el=document.getElementById('inv-content');
+  el.innerHTML=`<div class="lc"><div class="spin"></div></div>`;
+  try{
+    const d=await api('/inventory/list');
+    _inv=d.items||[];renderInvList(_inv);
+  }catch(e){el.innerHTML=`<div class="empty"><p>${esc(e.message)}</p></div>`;}
+}
+function renderInvList(items){
+  const el=document.getElementById('inv-content');if(!el)return;
+  if(!items.length){el.innerHTML=`<div class="empty"><p>No inventory items</p></div>`;return;}
+  el.innerHTML=items.map(invRow).join('');
+}
+function invRow(item){
+  const vcount=item.variants?.length||0;
+  const totalSh=item.variants?.reduce((s,v)=>s+(v.shopify_qty||0),0)??item.shopify_qty??'?';
+  const totalSq=item.variants?.reduce((s,v)=>s+(v.square_qty||0),0)??item.square_qty??'?';
+  const totalPh=item.variants?.reduce((s,v)=>s+(v.physical_count||0),0)??0;
+  const hasDis=item.variants?.some(v=>v.shopify_qty!=null&&v.square_qty!=null&&v.shopify_qty!==v.square_qty)||false;
+  const img=item.image_url?`<img src="${esc(item.image_url)}" alt="" onerror="this.style.display='none'">`:`<div class="nimg">No Img</div>`;
+  return `<div class="irow" onclick="App.openInv('${esc(item.id)}')">${img}
+    <div class="im">
+      <div class="in">${esc(item.name)}${hasDis?` <span class="badge bg-r" style="font-size:9px">!</span>`:''}</div>
+      <div class="is">${vcount>1?`${vcount} variants`:''}${vcount===1?(item.variants[0].sku||''):''}</div>
+    </div>
+    <div class="qtys">
+      <span class="qty-chip" style="background:var(--acd);color:var(--ac)" title="Shopify">Sh:${totalSh}</span>
+      <span class="qty-chip" style="background:var(--grd);color:var(--gr)" title="Square">Sq:${totalSq}</span>
+      <span class="qty-chip" style="background:var(--s3);color:var(--tx)" title="Physical">Ph:${totalPh}</span>
+    </div>
+  </div>`;
+}
+
+function openInv(itemId){
+  _selInv=_inv.find(i=>i.id===itemId);
+  if(!_selInv)return;
+  renderInvDetail();
+  document.getElementById('inv-ov').style.display='flex';
+}
+function renderInvDetail(){
+  const item=_selInv;if(!item)return;
+  const vrows=(item.variants||[]).map(v=>{
+    const disc=(v.shopify_qty!=null&&v.square_qty!=null&&v.shopify_qty!==v.square_qty)||
+      (v.shopify_price!=null&&v.square_price!=null&&Math.abs(v.shopify_price-v.square_price)>0.01);
+    return `<tr>
+      <td>${esc(v.name)}</td>
+      <td style="font-size:10px;color:var(--t3)">${esc(v.sku)}</td>
+      <td>${v.shopify_qty??'–'}</td>
+      <td>${v.square_qty??'–'}</td>
+      <td><strong>${v.physical_count}</strong></td>
+      <td style="color:${disc?'var(--re)':'var(--gr)'}">${disc?'⚠':'✓'}</td>
+      <td>
+        <button class="btn btn-g" style="font-size:10px;padding:4px 8px" onclick="App.invScan('${esc(v.sku)}',1)">+1</button>
+        <button class="btn btn-r" style="font-size:10px;padding:4px 8px;margin-left:3px" onclick="App.invScan('${esc(v.sku)}',-1)">−1</button>
+      </td>
+    </tr>`;
+  }).join('');
+  document.getElementById('inv-body').innerHTML=`
+    <h2 style="margin-bottom:12px">${esc(item.name)}</h2>
+    <table>
+      <thead><tr><th>Variant</th><th>SKU</th><th>Shopify</th><th>Square</th><th>Physical</th><th>OK?</th><th>Scan</th></tr></thead>
+      <tbody>${vrows}</tbody>
+    </table>`;
+}
+async function invScan(sku,delta){
+  try{
+    await api('/inventory/scan',{method:'POST',body:JSON.stringify({sku,change_amount:delta})});
+    // refresh and re-render
+    const d=await api('/inventory/list');
+    _inv=d.items||[];
+    _selInv=_inv.find(i=>i.id===_selInv?.id);
+    if(_selInv)renderInvDetail();
+  }catch(e){toast(e.message,'err');}
+}
+function closeInv(ev){if(ev&&ev.target!==document.getElementById('inv-ov'))return;document.getElementById('inv-ov').style.display='none';}
+
+async function syncInventory(){toast('Syncing…');try{const r=await api('/inventory/sync',{method:'POST'});toast(`Synced: ${r.shopify_variants_synced||0} Shopify, ${r.square_variants_synced||0} Square`,'ok');renderInventory();}catch(e){toast(e.message,'err');}}
+async function pushSquare(){if(!confirm('Push all physical counts to Square?'))return;try{await api('/inventory/push_square',{method:'POST'});toast('Pushed to Square ✓','ok');}catch(e){toast(e.message,'err');}}
+async function resetCounts(){if(!confirm('Reset ALL physical counts and scan history?'))return;try{await api('/inventory/reset',{method:'POST'});toast('Counts reset ✓','ok');renderInventory();}catch(e){toast(e.message,'err');}}
+async function cleanupInventory(){if(!confirm('Remove zero-count items?'))return;try{const r=await api('/inventory/cleanup',{method:'POST'});toast(`Removed ${r.removed} items ✓`,'ok');loadDiscrepancies();}catch(e){toast(e.message,'err');}}
+
+// ── Discrepancies ─────────────────────────────────────────────────
+async function loadDiscrepancies(){
+  const el=document.getElementById('disc-content');
+  el.innerHTML=`<div class="lc"><div class="spin"></div></div>`;
+  try{
+    _disc=await api('/inventory/discrepancies');
+    updateDiscStats(_disc);
+    showDisc(_discTab);
+  }catch(e){el.innerHTML=`<div class="empty"><p>${esc(e.message)}</p></div>`;}
+}
+function showDisc(type){
+  _discTab=type;
+  const el=document.getElementById('disc-content');if(!el)return;
+  let rows=[],cols=[];
+  if(type==='count'){
+    cols=['Product','Variant','SKU','Shopify Qty','Square Qty','Physical'];
+    rows=(_disc.count_discrepancies||[]).map(d=>`<tr>
+      <td>${esc(d.item_name)}</td><td>${esc(d.variant_name)}</td><td style="font-size:10px">${esc(d.sku)}</td>
+      <td>${d.shopify_qty??'–'}</td><td>${d.square_qty??'–'}</td><td>${d.physical_count}</td></tr>`);
+  }else if(type==='price'){
+    cols=['Product','Variant','SKU','Shopify $','Square $'];
+    rows=(_disc.price_discrepancies||[]).map(d=>`<tr>
+      <td>${esc(d.item_name)}</td><td>${esc(d.variant_name)}</td><td style="font-size:10px">${esc(d.sku)}</td>
+      <td>$${d.shopify_price?.toFixed(2)??'–'}</td><td>$${d.square_price?.toFixed(2)??'–'}</td></tr>`);
+  }else if(type==='miss_shopify'){
+    cols=['Product','Variant','SKU','Square Qty'];
+    rows=(_disc.missing_shopify||[]).map(d=>`<tr>
+      <td>${esc(d.item_name)}</td><td>${esc(d.variant_name)}</td><td style="font-size:10px">${esc(d.sku)}</td>
+      <td>${d.square_qty??'–'}</td></tr>`);
+  }else{
+    cols=['Product','Variant','SKU','Shopify Qty'];
+    rows=(_disc.missing_square||[]).map(d=>`<tr>
+      <td>${esc(d.item_name)}</td><td>${esc(d.variant_name)}</td><td style="font-size:10px">${esc(d.sku)}</td>
+      <td>${d.shopify_qty??'–'}</td></tr>`);
+  }
+  if(!rows.length){el.innerHTML=`<div class="empty"><p>No ${type.replace('_',' ')} discrepancies ✓</p></div>`;return;}
+  el.innerHTML=`<table><thead><tr>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table>`;
+}
+
+// ── Reports ───────────────────────────────────────────────────────
+async function fetchReport(){
+  const start=document.getElementById('rep-start').value;
+  const end=document.getElementById('rep-end').value;
+  if(!start||!end){toast('Select start and end dates','err');return;}
+  const el=document.getElementById('rep-content');
+  el.innerHTML=`<div class="lc"><div class="spin"></div></div>`;
+  try{
+    const d=await api(`/reports/profit?start_date=${start}&end_date=${end}`);
+    const s=d.summary;
+    el.innerHTML=`
+      <div class="rstats">
+        <div class="rstat"><div class="rv">$${(s.total_revenue||0).toFixed(2)}</div><div class="rl">Revenue</div></div>
+        <div class="rstat"><div class="rv">$${(s.total_profit||0).toFixed(2)}</div><div class="rl">Profit</div></div>
+        <div class="rstat"><div class="rv">${(s.avg_profit_margin||0).toFixed(1)}%</div><div class="rl">Avg Margin</div></div>
+        <div class="rstat"><div class="rv">$${(s.total_cogs||0).toFixed(2)}</div><div class="rl">COGS</div></div>
+        <div class="rstat"><div class="rv">$${(s.total_inflated_cogs||0).toFixed(2)}</div><div class="rl">Inflated COGS</div></div>
+      </div>
+      <table>
+        <thead><tr><th>Product</th><th>Sold</th><th>Revenue</th><th>COGS/item</th><th>Total Cost</th><th>Profit</th><th>Margin</th></tr></thead>
+        <tbody>${Object.values(d.items||{}).sort((a,b)=>b.total_profit-a.total_profit).map(i=>`<tr>
+          <td>${esc(i.name)}</td><td>${i.sold}</td><td>$${i.revenue.toFixed(2)}</td>
+          <td>$${i.cogs_per_item.toFixed(2)}</td><td>$${i.total_cost.toFixed(2)}</td>
+          <td style="color:${i.total_profit>=0?'var(--gr)':'var(--re)'}">$${i.total_profit.toFixed(2)}</td>
+          <td>${i.profit_margin.toFixed(1)}%</td></tr>`).join('')}</tbody>
+      </table>`;
+  }catch(e){el.innerHTML=`<div class="empty"><p>${esc(e.message)}</p></div>`;}
+}
+
+// ── Print / Add Stock ─────────────────────────────────────────────
+async function addStock(){
+  const p={item_name:document.getElementById('as-name').value,variant_name:document.getElementById('as-variant').value,
+    sku:document.getElementById('as-sku').value,price:parseFloat(document.getElementById('as-price').value)||0,
+    qty:parseInt(document.getElementById('as-qty').value)||1,variant_gid:document.getElementById('as-gid').value,
+    sticker_key:parseInt(document.getElementById('as-sticker').value),
+    deal_key:parseInt(document.getElementById('as-deal').value)};
+  const el=document.getElementById('as-result');el.textContent='Printing…';el.style.color='var(--t2)';
+  try{
+    const r=await api('/stock/add',{method:'POST',body:JSON.stringify(p)});
+    if(r.error)throw new Error(r.error);
+    el.textContent='✓ Labels printed and stock updated.';el.style.color='var(--gr)';toast('Done ✓','ok');
+  }catch(e){el.textContent='✗ '+e.message;el.style.color='var(--re)';toast(e.message,'err');}
+}
+
+// ── History ───────────────────────────────────────────────────────
+async function loadHistory(type){
+  _histTab=type;
+  const el=document.getElementById('hist-content');
+  el.innerHTML=`<div class="lc"><div class="spin"></div></div>`;
+  try{
+    if(type==='scans'){
+      const d=await api('/history/scans?limit=200');
+      const rows=d.history||[];
+      if(!rows.length){el.innerHTML=`<div class="empty"><p>No scan history</p></div>`;return;}
+      el.innerHTML=`<table>
+        <thead><tr><th>#</th><th>SKU</th><th>Change</th><th>Time</th><th>Undo</th></tr></thead>
+        <tbody>${rows.map(r=>`<tr>
+          <td>${r.id}</td><td style="font-size:10px">${esc(r.sku)}</td>
+          <td style="color:${r.change_amount>0?'var(--gr)':'var(--re)'}">${r.change_amount>0?'+':''}${r.change_amount}</td>
+          <td style="font-size:10px">${new Date(r.scanned_at).toLocaleString()}</td>
+          <td><button class="btn btn-r" style="font-size:10px;padding:3px 8px" onclick="App.undoScan(${r.id})">Undo</button></td>
+        </tr>`).join('')}</tbody>
+      </table>`;
+    }else{
+      const d=await api('/history/prints?limit=100');
+      const rows=d.history||[];
+      if(!rows.length){el.innerHTML=`<div class="empty"><p>No print history</p></div>`;return;}
+      el.innerHTML=`<table>
+        <thead><tr><th>#</th><th>Item</th><th>Variant</th><th>SKU</th><th>Price</th><th>Qty</th><th>Template</th><th>Time</th></tr></thead>
+        <tbody>${rows.map(r=>`<tr>
+          <td>${r.id}</td><td>${esc(r.item_name||'')}</td><td>${esc(r.variant_name||'')}</td>
+          <td style="font-size:10px">${esc(r.sku||'')}</td>
+          <td>${r.price!=null?'$'+parseFloat(r.price).toFixed(2):'–'}</td>
+          <td>${r.qty}</td><td style="font-size:10px">${esc((r.template||'').split('/').pop().split('\\').pop())}</td>
+          <td style="font-size:10px">${new Date(r.printed_at).toLocaleString()}</td>
+        </tr>`).join('')}</tbody>
+      </table>`;
+    }
+  }catch(e){el.innerHTML=`<div class="empty"><p>${esc(e.message)}</p></div>`;}
+}
+function showHist(type){_histTab=type;loadHistory(type);}
+async function undoScan(id){
+  if(!confirm('Undo this scan?'))return;
+  try{await api(`/inventory/undo/${id}`,{method:'POST'});toast('Undone ✓','ok');loadHistory('scans');}catch(e){toast(e.message,'err');}
+}
+
+// ── Init ──────────────────────────────────────────────────────────
+// Set default report dates
+(()=>{const now=new Date();const toDateStr=d=>d.toISOString().split('T')[0];
+  const start=new Date(now);start.setDate(1);
+  document.getElementById('rep-start').value=toDateStr(start);
+  document.getElementById('rep-end').value=toDateStr(now);
+})();
+
+refresh();
+
+return{refresh,doRefreshPrices,tab,filterF,filterI,
+  openDet,closeDetail,doOpen,doFinish,doReceive,doCartAdd,doDelete,
+  qa,confirmQ,closeQ,renderCart,cartOrdered,cartArrived,
+  openCreate,openModify,closeForm,submitForm,
+  renderInventory,invScan,closeInv,syncInventory,pushSquare,resetCounts,cleanupInventory,
+  loadDiscrepancies,showDisc,fetchReport,addStock,loadHistory,showHist,undoScan};
+})();
+</script>
+</body>
+</html>

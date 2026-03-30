@@ -1,0 +1,21 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Filament Stock Manager",
+        "data": {
+          "tag_label_path": "Tag label (.lbx) path",
+          "sticker_label_path": "Sticker label (.lbx) path",
+          "egg_label_path": "Egg label (.lbx) path",
+          "small_sticker_label_path": "Small sticker label (.lbx) path",
+          "shopify_url": "Shopify store URL (e.g. mystore.myshopify.com)",
+          "shopify_token": "Shopify Admin API access token",
+          "square_token": "Square access token",
+          "square_location_id": "Square location ID",
+          "price_refresh_hour": "Price refresh hour (0-23, default 3)"
+        }
+      }
+    },
+    "error": { "file_not_found": "File not found — check the path is accessible from Home Assistant." }
+  }
+}
